@@ -91,24 +91,21 @@ class _DeviceItemState extends State<DeviceItem> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Spacer(),
-                        Container(
-                          // height: 30,
-                          child: InkWell(
-                            onTap: (){
-                              return widget.openOnTap();
-                            },
-                            child: Center(child: const Text('open',style: TextStyle(fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)),
-                          ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: (){
+                            return widget.openOnTap();
+                          },
+                          child: const Center(child: Text('open',style: TextStyle(fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         InkWell(
                           onTap: ()async{
                             return await widget.disconnectOnTap();
                           },
-                          child: Center(child: const Text('disconnect',style: TextStyle(fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)),
+                          child: const Center(child: Text('disconnect',style: TextStyle(fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         // SizedBox(height: 2,),
                       ],
                     );

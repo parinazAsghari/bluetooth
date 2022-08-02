@@ -300,39 +300,34 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                 disconnectOnTap: () {},
                                                 connectOnTap: () async {
                                                   print('conect1 on tap check');
-                                                  // Future.delayed(
-                                                  //     const Duration(
-                                                  //         seconds: 3),
-                                                  //         () async {
-                                                  //       var pref =
-                                                  //       await SharedPreferences
-                                                  //           .getInstance();
-                                                  //       var flag =
-                                                  //       pref.getBool('flag');
-                                                  //       if (flag == false) {
-                                                  //         setState(() {});
-                                                  //       }
-                                                  //     });
+                                                  Future.delayed(
+                                                      const Duration(
+                                                          seconds: 3),
+                                                          () async {
+                                                        var pref =
+                                                        await SharedPreferences
+                                                            .getInstance();
+                                                        var flag =
+                                                        pref.getBool('flag');
+                                                        if (flag == false) {
+                                                          setState(() {});
+                                                        }
+                                                      });
 
                                                   await element.device.connect(
                                                     autoConnect: true,
                                                   );
-                                                  Future.delayed(
-                                                      const Duration(seconds: 4),
-                                                          () async {
-                                                            var pref = await SharedPreferences.getInstance();
-                                                            pref.setBool('flag', true);
-                                                            publicFlag = true;
-                                                            //TOdo
-                                                            await Navigator.of(context).push(MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    GasLevelPage(
-                                                                      device: element
-                                                                          .device,
-                                                                    ),
-                                                              ),);
-                                                            setState(() {});
-                                                      });
+                                                  var pref = await SharedPreferences.getInstance();
+                                                  pref.setBool('flag', true);
+                                                  publicFlag = true;
+                                                  await Navigator.of(context).push(MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        GasLevelPage(
+                                                          device: element
+                                                              .device,
+                                                        ),
+                                                  ),);
+                                                  setState(() {});
 
                                                 },
                                               ),
@@ -362,39 +357,35 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                           disconnectOnTap: () {},
                                           connectOnTap: () async {
                                             print('conect on tap check');
-                                            // Future.delayed(const Duration(seconds: 3),
-                                            //         () async {
-                                            //       var pref = await SharedPreferences
-                                            //           .getInstance();
-                                            //       var flag = pref.getBool(
-                                            //           'flag');
-                                            //       print('flaggss $flag');
-                                            //       if (flag == false ||
-                                            //           flag == null) {
-                                            //         setState(() {});
-                                            //       }
-                                            //     });
+                                            Future.delayed(const Duration(seconds: 3),
+                                                    () async {
+                                                  var pref = await SharedPreferences
+                                                      .getInstance();
+                                                  var flag = pref.getBool(
+                                                      'flag');
+                                                  print('flaggss $flag');
+                                                  if (flag == false ||
+                                                      flag == null) {
+                                                    setState(() {});
+                                                  }
+                                                });
                                             await element.device.connect(
                                               autoConnect: true,
                                             );
-                                            Future.delayed(const Duration(seconds: 4),
-                                                    () async {
-                                                      var pref = await SharedPreferences
-                                                          .getInstance();
-                                                      pref.setBool('flag', true);
-                                                      publicFlag = true;
-                                                      //TOdo
-                                                      await Navigator.of(context).push(
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              GasLevelPage(
-                                                                device: element.device,
-                                                              ),
-                                                        ),
-                                                      );
-                                                      setState(() {});
-                                                });
-
+                                            var pref = await SharedPreferences
+                                                .getInstance();
+                                            pref.setBool('flag', true);
+                                            publicFlag = true;
+                                            //TOdo
+                                            await Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    GasLevelPage(
+                                                      device: element.device,
+                                                    ),
+                                              ),
+                                            );
+                                            setState(() {});
                                           },
                                         ));
                                       }
