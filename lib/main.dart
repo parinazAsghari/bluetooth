@@ -369,6 +369,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                     setState(() {});
                                                   }
                                                 });
+
                                             await element.device.connect(
                                               autoConnect: true,
                                             );
