@@ -1,20 +1,22 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:io';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 
 class DeviceItem extends StatefulWidget {
-  const DeviceItem({Key? key,required this.deviceName,required this.isConnected, required this.connectOnTap, required this.disconnectOnTap, required this.openOnTap, required this.flag, required this.bluetoothDevice, required this.update}) : super(key: key);
+  const DeviceItem({Key? key,required this.deviceName,required this.isConnected, required this.connectOnTap, required this.disconnectOnTap, required this.openOnTap,required this.bluetoothDevice, required this.update, required this.sharedPreferences, }) : super(key: key);
   final String deviceName;
   final BluetoothDevice bluetoothDevice;
   final bool isConnected;
-  final bool flag;
+  // final String? flag;
   final Function() connectOnTap;
   final Function() openOnTap;
   final Function() disconnectOnTap;
   final Function() update;
+  final SharedPreferences sharedPreferences;
 
   @override
   State<DeviceItem> createState() => _DeviceItemState();
@@ -29,6 +31,29 @@ class _DeviceItemState extends State<DeviceItem> {
     }
     super.dispose();
   }
+
+    @override
+    void initState() {
+      if(widget.sharedPreferences.getKeys().toList().isNotEmpty){
+        List<String?> keyList= widget.sharedPreferences.getKeys().toList();
+        if(keyList.isNotEmpty){
+          for (var element in keyList) {
+          value.add(widget.sharedPreferences.get(element!));
+            // value.add(widget.sharedPreferences.getInt(element!)!.first);
+          }
+         value.forEach((element) {
+           if(element==3){
+             enable = false;
+           }
+         });
+        }
+
+      }
+      super.initState();
+    }
+
+    List<dynamic?> value=[];
+  bool? enable;
 
 
   @override
@@ -76,7 +101,8 @@ class _DeviceItemState extends State<DeviceItem> {
             widget.isConnected?
             Expanded(
               flex: 5,
-              child: StreamBuilder<BluetoothDeviceState>(
+              child:
+              StreamBuilder<BluetoothDeviceState>(
                 stream: widget.bluetoothDevice.state,
                 builder: (BuildContext context, AsyncSnapshot<BluetoothDeviceState> deviceState) {
                   print('kkkkkkkkkkkk1111 ${deviceState.data}');
@@ -84,9 +110,9 @@ class _DeviceItemState extends State<DeviceItem> {
                     if(timer!=null){
                       timer!.cancel();
                     }
-                    FlutterBluePlus.instance.connectedDevices.then((value) {
-                      print('rrrrrrrrrrrrrrrr1 ${value.length}');
-                    });
+                    widget.sharedPreferences.setInt('${widget.bluetoothDevice.id}',3);
+                    widget.sharedPreferences.setString('lastDeviceId', '${widget.bluetoothDevice.id}');
+
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -119,6 +145,11 @@ class _DeviceItemState extends State<DeviceItem> {
                         // setState(() {});
                       });
                     }
+
+                    // widget.sharedPreferences.clear();
+                    // widget.sharedPreferences.setStringList('${widget.bluetoothDevice.id}', ["false"]);
+                    widget.sharedPreferences.setInt('${widget.bluetoothDevice.id}',2);
+                    widget.sharedPreferences.setString('lastDeviceId', '');
                     return const Padding(
                       padding: EdgeInsets.only(right: 2.0),
                       child: Text('device disconnected,wait...',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 10),),
@@ -136,26 +167,43 @@ class _DeviceItemState extends State<DeviceItem> {
             Expanded(
               flex: 2,
               child:
-              StreamBuilder(
-                stream: widget.bluetoothDevice.state,
-                builder: (BuildContext context, AsyncSnapshot<dynamic> state) {
-                  if(timer!=null){
-                    timer!.cancel();
-                  }
-                  if( state.connectionState ==ConnectionState.active && state.data == BluetoothDeviceState.connected ){
-                    return  Text('connecting',style: TextStyle(fontSize: 15,color:widget.flag ? Colors.white.withOpacity(0.5) : Colors.white),);
-                  }
-                 return TextButton(
-                    // onPressed: widget.flag ? null : ()async{
-                    onPressed: widget.flag ? null : ()async{
+              // StreamBuilder(
+              //   stream: widget.bluetoothDevice.state,
+              //   builder: (BuildContext context, AsyncSnapshot<dynamic> state) {
+              //     if(timer!=null){
+              //       timer!.cancel();
+              //     }
+
+                  // if( state.connectionState ==ConnectionState.active && state.data == BluetoothDeviceState.connected ){
+                  //   return  Text('connecting',style: TextStyle(fontSize: 15,color:widget.flag ? Colors.white.withOpacity(0.5) : Colors.white),);
+                  // }
+                  // List<String>? flag = widget.sharedPrefInstance.getStringList('${widget.bluetoothDevice.id}');
+                  // var flagTest;
+                  // if(flag!=null){
+                  //   flagTest = flag.first;
+                  // }
+                 // return
+                TextButton(
+                   // onPressed: widget.flag=="true" ? null : widget.flag==null? ()async{
+                   //   return widget.connectOnTap();
+                   // }:null,
+                    onPressed: enable==false?null:()async{
                       return widget.connectOnTap();
-
                     },
-                    child:  Text('connect',style: TextStyle(fontSize: 15,color:widget.flag ? Colors.white.withOpacity(0.5) : Colors.white),),
-                  );
-                },
+                    // widget.flag==null && widget.sharedPreferences.getKeys().toList().isEmpty  ?
+                    //     ()async{
+                    //   return widget.connectOnTap();
+                    // }:
+                    // widget.flag==null && value == "true"?
+                    // null:
+                    //     ()async{return widget.connectOnTap();},
+                    // child:  Text('connect',style: TextStyle(fontSize: 15,color:widget.flag=="true" ? Colors.white.withOpacity(0.5) : Colors.white),),
 
-              )
+                  child:  Text('connect',style: TextStyle(fontSize: 15,color:enable==false?Colors.white.withOpacity(0.5):Colors.white),),
+                  ),
+              //   },
+              //
+              // )
             )
           ],
         ),

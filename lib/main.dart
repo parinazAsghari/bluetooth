@@ -105,11 +105,13 @@ class FindDevicesScreen extends StatefulWidget {
 }
 
 class _FindDevicesScreenState extends State<FindDevicesScreen> {
+  String? lastDeviceId;
   @override
   void initState() {
     FlutterBluePlus.instance.stopScan().then((value) {setState(() {});});
     checkBluetoothPermission();
-    publicFlag = widget.sharedPrefInstance.getBool('flag');
+    // publicFlag = widget.sharedPrefInstance.getBool('flag');
+    // lastDeviceId = widget.sharedPrefInstance.getString('lastDeviceId');
     image = Image.asset(
       'assets/new-photo.jpg',
     );
@@ -117,7 +119,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   }
 
   late Image image;
-  bool? publicFlag;
+  // String? publicFlag;
 
   @override
   void didChangeDependencies() {
@@ -136,6 +138,9 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   disconnect() async {
     for (var element in validDevicesList) {
       await element.disconnect();
+      if(widget.sharedPrefInstance.getInt('${element.id}')==3){
+        widget.sharedPrefInstance.setInt('${element.id}', 2);
+      }
     }
   }
 
@@ -153,7 +158,10 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   }
 
   connectToDevice(BluetoothDevice bluetoothDevice) async {
-    await bluetoothDevice.connect(autoConnect: true);
+    await bluetoothDevice.connect(autoConnect: false);
+   var instance =  await SharedPreferences.getInstance();
+   instance.setInt('${bluetoothDevice.id}', 3);
+   instance.setString('lastDeviceId', '${bluetoothDevice.id}');
     setState(() {});
   }
 
@@ -163,6 +171,8 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   @override
   Widget build(BuildContext context) {
     print('builddddd1111');
+    lastDeviceId = widget.sharedPrefInstance.getString('lastDeviceId');
+    print('last device is ${lastDeviceId}');
 
     return WillPopScope(
       onWillPop: () async {
@@ -191,7 +201,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
             onRefresh: () async {
               validDevicesList.clear();
               deviceItemList.clear();
-              print('flagggggggg $publicFlag');
+              // print('flagggggggg $publicFlag');
               setState(() {});
             },
             child: ListView(
@@ -218,13 +228,18 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                         if (connectedDevicesSnapshot.data![i].name != '' &&
                             connectedDevicesSnapshot.data![i].name
                                 .startsWith('GASLEVEL')) {
+                         // List<String>? flag = widget.sharedPrefInstance.getStringList('${connectedDevicesSnapshot.data![i].id}');
+                         // if(flag!=null){
+                         //   publicFlag = flag.first;
+                         // }
                           validDevicesList.add(connectedDevicesSnapshot.data![i]);
                           deviceItemList.add(DeviceItem(
+                            sharedPreferences: widget.sharedPrefInstance,
                             update: (){
                               setState(() {});
                             },
                               bluetoothDevice: validDevicesList[i],
-                              flag: publicFlag ?? false,
+                              // flag:flag?.first ,
                               deviceName: validDevicesList[i].name,
                               isConnected: true,
                               openOnTap: ()async {
@@ -238,11 +253,11 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                 await validDevicesList[i].disconnect();
                                 var pref =
                                     await SharedPreferences.getInstance();
-                                pref.setBool('flag', false);
-                                publicFlag = false;
-                                // Future.delayed(const Duration(seconds: 1), () {
-                                print('jjjjjjjjjjjjj');
-                                Future.delayed(Duration(seconds: 4),(){
+                                pref.setInt('${validDevicesList[i].id}', 2);
+                                pref.setString('lastDeviceId','');
+                                // pref.setStringList('${validDevicesList[i].id}', ['false']);
+
+                                Future.delayed(Duration(seconds: 3),(){
                                   setState(() {});
                                 });
                                 // });
@@ -286,14 +301,19 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                             // if(flag==true){
                                             // connectToDevice(element.device);
                                             // }
+                                            // List<String>? flag = widget.sharedPrefInstance.getStringList('${element.device.id}');
+                                            // if(flag!=null){
+                                            //   publicFlag = flag.first;
+                                            // }
                                             addToList.add(element.device);
                                             deviceItemList.add(
                                               DeviceItem(
+                                                sharedPreferences: widget.sharedPrefInstance,
                                                 update: (){
                                                   setState(() {});
                                                 },
                                                 bluetoothDevice: element.device,
-                                                flag: publicFlag ?? false,
+                                                // flag: flag?.first,
                                                 deviceName: element.device.name,
                                                 isConnected: false,
                                                 openOnTap: () {},
@@ -307,19 +327,21 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                         var pref =
                                                         await SharedPreferences
                                                             .getInstance();
-                                                        var flag =
-                                                        pref.getBool('flag');
-                                                        if (flag == false) {
+                                                       // var flag= pref.getStringList('${element.device.id}');
+                                                       var flag= pref.getInt('${element.device.id}');
+                                                        if (flag!=3) {
                                                           setState(() {});
                                                         }
                                                       });
 
                                                   await element.device.connect(
-                                                    autoConnect: true,
+                                                    autoConnect: false,
                                                   );
                                                   var pref = await SharedPreferences.getInstance();
-                                                  pref.setBool('flag', true);
-                                                  publicFlag = true;
+                                                  // pref.setStringList('${element.device.id}', ['true']);
+                                                  pref.setInt('${element.device.id}', 3);
+                                                  pref.setString('lastDeviceId', '${element.device.id}');
+
                                                   await Navigator.of(context).push(MaterialPageRoute(
                                                     builder: (context) =>
                                                         GasLevelPage(
@@ -340,16 +362,22 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                           });
                                         }
                                       } else {
-                                        if (publicFlag == true) {
+                                        // List<String>? flag = widget.sharedPrefInstance.getStringList('${element.device.id}');
+                                        // if(flag!=null){
+                                        //   publicFlag = flag.first;
+                                        // }
+                                        // if (flag!=null && flag.first == "true") {
+                                        if (lastDeviceId== '${element.device.id}') {
                                           connectToDevice(element.device);
                                         }
                                         validDevicesList.add(element.device);
                                         deviceItemList.add(DeviceItem(
+                                          sharedPreferences: widget.sharedPrefInstance,
                                           update: (){
                                             setState(() {});
                                           },
                                           bluetoothDevice: element.device,
-                                          flag: publicFlag ?? false,
+                                          // flag: flag?.first ,
                                           deviceName: element.device.name,
                                           // isConnected:flag==true?true: false,
                                           isConnected: false,
@@ -361,23 +389,26 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                     () async {
                                                   var pref = await SharedPreferences
                                                       .getInstance();
-                                                  var flag = pref.getBool(
-                                                      'flag');
+                                                  // var flag= pref.getStringList('${element.device.id}');
+                                                  var flag= pref.getInt('${element.device.id}');
+                                                  // var flag = pref.getBool(
+                                                  //     'flag');
                                                   print('flaggss $flag');
-                                                  if (flag == false ||
-                                                      flag == null) {
+                                                  // if (flag!.first==null || flag.first == "false") {
+                                                  if (flag!=3) {
                                                     setState(() {});
                                                   }
                                                 });
 
                                             await element.device.connect(
-                                              autoConnect: true,
+                                              autoConnect: false,
                                             );
                                             var pref = await SharedPreferences
                                                 .getInstance();
-                                            pref.setBool('flag', true);
-                                            publicFlag = true;
-                                            //TOdo
+
+                                            pref.setInt('${element.device.id}', 3);
+                                            pref.setString('lastDeviceId', '${element.device.id}');
+                                            // pref.setStringList('${element.device.id}', ['true']);
                                             await Navigator.of(context).push(
                                               MaterialPageRoute(
                                                 builder: (context) =>
