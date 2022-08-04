@@ -38,14 +38,14 @@ class _DeviceItemState extends State<DeviceItem> {
         List<String?> keyList= widget.sharedPreferences.getKeys().toList();
         if(keyList.isNotEmpty){
           for (var element in keyList) {
-          value.add(widget.sharedPreferences.get(element!));
+            value.add(widget.sharedPreferences.get(element!));
             // value.add(widget.sharedPreferences.getInt(element!)!.first);
           }
-         value.forEach((element) {
-           if(element==3){
-             enable = false;
-           }
-         });
+          value.forEach((element) {
+            if(element==3){
+              enable = false;
+            }
+          });
         }
 
       }

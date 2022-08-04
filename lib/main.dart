@@ -140,6 +140,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
       await element.disconnect();
       if(widget.sharedPrefInstance.getInt('${element.id}')==3){
         widget.sharedPrefInstance.setInt('${element.id}', 2);
+        // print('handy disconnect ${widget.sharedPrefInstance.getInt('${element.id}')}');
       }
     }
   }
@@ -157,12 +158,13 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
     });
   }
 
-  connectToDevice(BluetoothDevice bluetoothDevice) async {
-    await bluetoothDevice.connect(autoConnect: false);
-   var instance =  await SharedPreferences.getInstance();
-   instance.setInt('${bluetoothDevice.id}', 3);
-   instance.setString('lastDeviceId', '${bluetoothDevice.id}');
-    setState(() {});
+  Future<void> connectToDevice(BluetoothDevice bluetoothDevice) async {
+    await bluetoothDevice.connect(autoConnect: true);
+    // print('handy connect');
+    // var instance =  await SharedPreferences.getInstance();
+   // instance.setInt('${bluetoothDevice.id}', 3);
+   // instance.setString('lastDeviceId', '${bluetoothDevice.id}');
+    // setState(() {});
   }
 
   List<BluetoothDevice> validDevicesList = [];
@@ -171,7 +173,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   @override
   Widget build(BuildContext context) {
     print('builddddd1111');
-    lastDeviceId = widget.sharedPrefInstance.getString('lastDeviceId');
+    lastDeviceId =widget.sharedPrefInstance.getString('lastDeviceId');
     print('last device is ${lastDeviceId}');
 
     return WillPopScope(
@@ -210,70 +212,125 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                 FutureBuilder<List<BluetoothDevice>>(
                   initialData: [],
                   future: FlutterBluePlus.instance.connectedDevices,
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<BluetoothDevice>>
-                          connectedDevicesSnapshot) {
+                  builder: (BuildContext context, AsyncSnapshot<List<BluetoothDevice>> connectedDevicesSnapshot) {
                     validDevicesList.clear();
                     deviceItemList.clear();
                     print('test1 ${connectedDevicesSnapshot.data}');
                     print('test2 ${connectedDevicesSnapshot.connectionState}');
-                    if (connectedDevicesSnapshot.hasData &&
-                        connectedDevicesSnapshot.data!.isNotEmpty &&
-                        connectedDevicesSnapshot.connectionState ==
-                            ConnectionState.done) {
+                    if (connectedDevicesSnapshot.hasData && connectedDevicesSnapshot.data!.isNotEmpty && connectedDevicesSnapshot.connectionState == ConnectionState.done) {
                       print('conected ${connectedDevicesSnapshot.data}');
-                      for (int i = 0;
-                          i < connectedDevicesSnapshot.data!.length;
-                          i++) {
-                        if (connectedDevicesSnapshot.data![i].name != '' &&
-                            connectedDevicesSnapshot.data![i].name
-                                .startsWith('GASLEVEL')) {
+                      for (int i = 0; i < connectedDevicesSnapshot.data!.length; i++) {
+                        if (connectedDevicesSnapshot.data![i].name != '' && connectedDevicesSnapshot.data![i].name.startsWith('GASLEVEL')) {
                          // List<String>? flag = widget.sharedPrefInstance.getStringList('${connectedDevicesSnapshot.data![i].id}');
                          // if(flag!=null){
                          //   publicFlag = flag.first;
                          // }
-                          validDevicesList.add(connectedDevicesSnapshot.data![i]);
-                          deviceItemList.add(DeviceItem(
-                            sharedPreferences: widget.sharedPrefInstance,
-                            update: (){
-                              setState(() {});
-                            },
+                          bool? stateThreeExist;
+                          List<dynamic?> value=[];
+                          value.clear();
+                          if(widget.sharedPrefInstance.getKeys().toList().isNotEmpty){
+                            List<String?> keyList= widget.sharedPrefInstance.getKeys().toList();
+                            if(keyList.isNotEmpty){
+                              for (var element in keyList) {
+                                value.add(widget.sharedPrefInstance.get(element!));
+                              }
+                              value.forEach((element) {
+                                if(element==3){
+                                  stateThreeExist = true;
+                                }
+                              });
+                            }
+
+                          }
+                          if(lastDeviceId != connectedDevicesSnapshot.data![i].id.toString() && stateThreeExist==true ){
+                            connectedDevicesSnapshot.data![i].disconnect();
+                            validDevicesList.add(connectedDevicesSnapshot.data![i]);
+                            deviceItemList.add(DeviceItem(
+                              sharedPreferences: widget.sharedPrefInstance,
+                              update: (){
+                                setState(() {});
+                              },
+                              bluetoothDevice: validDevicesList[i],
+                              // flag:flag?.first ,
+                              deviceName: validDevicesList[i].name,
+                              isConnected: false,
+                              openOnTap: () {},
+                              disconnectOnTap: ()  {},
+                              connectOnTap: () async{
+                                Future.delayed(
+                                    const Duration(
+                                        seconds: 3),
+                                        () async {
+                                      var pref = await SharedPreferences
+                                          .getInstance();
+                                      // var flag= pref.getStringList('${element.device.id}');
+                                      var flag = pref
+                                          .getInt('${validDevicesList[i].id}');
+                                      if (flag != 3) {
+                                        setState(() {});
+                                      }
+                                    });
+
+                                await validDevicesList[i].connect(autoConnect: true,);
+                                var pref = await SharedPreferences.getInstance();
+                                // pref.setStringList('${element.device.id}', ['true']);
+                                pref.setInt('${validDevicesList[i].id}', 3);
+                                pref.setString('lastDeviceId', '${validDevicesList[i].id}');
+                                await Navigator.of(context)
+                                    .push(MaterialPageRoute(
+                                  builder: (context) =>
+                                      GasLevelPage(
+                                        device: validDevicesList[i],
+                                      ),
+                                ),);
+                                setState(() {});
+                              },
+                            ),);
+                          }else {
+                            widget.sharedPrefInstance.setInt('${connectedDevicesSnapshot.data![i].id}', 3);
+                            widget.sharedPrefInstance.setString('lastDeviceId', '${connectedDevicesSnapshot.data![i].id}');
+                            validDevicesList.add(connectedDevicesSnapshot.data![i]);
+                            deviceItemList.add(DeviceItem(
+                              sharedPreferences: widget.sharedPrefInstance,
+                              update: () {
+                                setState(() {});
+                              },
                               bluetoothDevice: validDevicesList[i],
                               // flag:flag?.first ,
                               deviceName: validDevicesList[i].name,
                               isConnected: true,
-                              openOnTap: ()async {
-                               await Navigator.of(context).push(
+                              openOnTap: () async {
+                                await Navigator.of(context).push(
                                   MaterialPageRoute(
-                                      builder: (context) => GasLevelPage(
-                                          device: validDevicesList[i])),
+                                      builder: (context) =>
+                                          GasLevelPage(
+                                              device: validDevicesList[i])),
                                 );
                               },
                               disconnectOnTap: () async {
                                 await validDevicesList[i].disconnect();
                                 var pref =
-                                    await SharedPreferences.getInstance();
+                                await SharedPreferences.getInstance();
                                 pref.setInt('${validDevicesList[i].id}', 2);
-                                pref.setString('lastDeviceId','');
+                                pref.setString('lastDeviceId', '');
                                 // pref.setStringList('${validDevicesList[i].id}', ['false']);
 
-                                Future.delayed(Duration(seconds: 3),(){
+                                Future.delayed(Duration(seconds: 3), () {
                                   setState(() {});
                                 });
                                 // });
                               },
                               connectOnTap: () {},
                             ),);
+                          }
                         }
                       }
                       print('dddd ${deviceItemList.length}');
                     }
-                    if (connectedDevicesSnapshot.connectionState ==
-                        ConnectionState.done) {
+                    if (connectedDevicesSnapshot.connectionState == ConnectionState.done) {
                       return FutureBuilder<dynamic>(
                         future: FlutterBluePlus.instance.startScan(timeout: const Duration(seconds: 2)),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<dynamic> snapshot) {
+                        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
                           print('test second future builder ${snapshot.data}');
                           if (snapshot.hasData || snapshot.connectionState==ConnectionState.done) {
                             FlutterBluePlus.instance.stopScan();
@@ -281,79 +338,87 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                           return StreamBuilder<List<ScanResult>>(
                             initialData: [],
                             stream: FlutterBluePlus.instance.scanResults,
-                            builder: (BuildContext context,
-                                AsyncSnapshot<List<ScanResult>> scanResult) {
+                            builder: (BuildContext context, AsyncSnapshot<List<ScanResult>> scanResult) {
                               if(scanResult.hasData) {
                                 if (scanResult.data!.isNotEmpty) {
-                                  print(
-                                      'scannnnn resultttt ${scanResult.data}');
+                                  print('scannnnn resultttt ${scanResult.data}');
                                   for (var element in scanResult.data!) {
-                                    if (element.device.name != '' &&
-                                        element.device.name
-                                            .startsWith('GASLEVEL')) {
+                                    if (element.device.name != '' && element.device.name.startsWith('GASLEVEL')) {
                                       if (validDevicesList.isNotEmpty) {
                                         List<BluetoothDevice> addToList = [];
                                         addToList.clear();
                                         for (var element1 in validDevicesList) {
                                           // if (element1.id != element.device.id && element1.name!=element.device.name&& !validDevicesList.contains(element.device)) {
-                                          if (!validDevicesList
-                                              .contains(element.device)) {
-                                            // if(flag==true){
-                                            // connectToDevice(element.device);
-                                            // }
-                                            // List<String>? flag = widget.sharedPrefInstance.getStringList('${element.device.id}');
-                                            // if(flag!=null){
-                                            //   publicFlag = flag.first;
-                                            // }
-                                            addToList.add(element.device);
-                                            deviceItemList.add(
-                                              DeviceItem(
-                                                sharedPreferences: widget.sharedPrefInstance,
-                                                update: (){
-                                                  setState(() {});
-                                                },
-                                                bluetoothDevice: element.device,
-                                                // flag: flag?.first,
-                                                deviceName: element.device.name,
-                                                isConnected: false,
-                                                openOnTap: () {},
-                                                disconnectOnTap: () {},
-                                                connectOnTap: () async {
-                                                  print('conect1 on tap check');
-                                                  Future.delayed(
-                                                      const Duration(
-                                                          seconds: 3),
-                                                          () async {
-                                                        var pref =
-                                                        await SharedPreferences
-                                                            .getInstance();
-                                                       // var flag= pref.getStringList('${element.device.id}');
-                                                       var flag= pref.getInt('${element.device.id}');
-                                                        if (flag!=3) {
-                                                          setState(() {});
-                                                        }
-                                                      });
+                                          if (!validDevicesList.contains(element.device)) {
+                                            // if (lastDeviceId== '${element.device.id}' ) {
+                                            //   connectToDevice(element.device).then((value) {
+                                            //     widget.sharedPrefInstance.setInt('${element.device.id}', 3);
+                                            //     widget.sharedPrefInstance.setString('lastDeviceId', '${element.device.id}');
+                                            //     setState(() {});
+                                            //   });
+                                            //
+                                            // }else {
 
-                                                  await element.device.connect(
-                                                    autoConnect: false,
-                                                  );
-                                                  var pref = await SharedPreferences.getInstance();
-                                                  // pref.setStringList('${element.device.id}', ['true']);
-                                                  pref.setInt('${element.device.id}', 3);
-                                                  pref.setString('lastDeviceId', '${element.device.id}');
+                                              addToList.add(element.device);
+                                              deviceItemList.add(
+                                                DeviceItem(
+                                                  sharedPreferences: widget
+                                                      .sharedPrefInstance,
+                                                  update: () {
+                                                    setState(() {});
+                                                  },
+                                                  bluetoothDevice: element
+                                                      .device,
+                                                  // flag: flag?.first,
+                                                  deviceName: element.device
+                                                      .name,
+                                                  isConnected: false,
+                                                  openOnTap: () {},
+                                                  disconnectOnTap: () {},
+                                                  connectOnTap: () async {
+                                                    print(
+                                                        'conect1 on tap check');
+                                                    Future.delayed(
+                                                        const Duration(
+                                                            seconds: 3),
+                                                            () async {
+                                                          var pref = await SharedPreferences
+                                                              .getInstance();
+                                                          // var flag= pref.getStringList('${element.device.id}');
+                                                          var flag = pref
+                                                              .getInt('${element
+                                                              .device.id}');
+                                                          if (flag != 3) {
+                                                            setState(() {});
+                                                          }
+                                                        });
 
-                                                  await Navigator.of(context).push(MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        GasLevelPage(
-                                                          device: element
-                                                              .device,
-                                                        ),
-                                                  ),);
-                                                  setState(() {});
+                                                    await element.device
+                                                        .connect(
+                                                      autoConnect: true,);
+                                                    var pref = await SharedPreferences
+                                                        .getInstance();
+                                                    // pref.setStringList('${element.device.id}', ['true']);
+                                                    pref.setInt(
+                                                        '${element.device.id}',
+                                                        3);
+                                                    pref.setString(
+                                                        'lastDeviceId',
+                                                        '${element.device.id}');
 
-                                                },
-                                              ),
-                                            );
+                                                    await Navigator.of(context)
+                                                        .push(MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          GasLevelPage(
+                                                            device: element
+                                                                .device,
+                                                          ),
+                                                    ),);
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                              );
+
                                           }
                                         }
                                         if (addToList.length > 0) {
@@ -361,65 +426,72 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                             validDevicesList.add(element);
                                           });
                                         }
-                                      } else {
-                                        // List<String>? flag = widget.sharedPrefInstance.getStringList('${element.device.id}');
-                                        // if(flag!=null){
-                                        //   publicFlag = flag.first;
+                                      }
+                                      else {
+                                        // if (lastDeviceId== '${element.device.id}' ) {
+                                        // connectToDevice(element.device).then((value){
+                                        //   widget.sharedPrefInstance.setInt('${element.device.id}', 3);
+                                        //   widget.sharedPrefInstance.setString('lastDeviceId', '${element.device.id}');
+                                        //   setState(() {});
+                                        // }) ;
+                                        //
                                         // }
-                                        // if (flag!=null && flag.first == "true") {
-                                        if (lastDeviceId== '${element.device.id}') {
-                                          connectToDevice(element.device);
-                                        }
-                                        validDevicesList.add(element.device);
-                                        deviceItemList.add(DeviceItem(
-                                          sharedPreferences: widget.sharedPrefInstance,
-                                          update: (){
-                                            setState(() {});
-                                          },
-                                          bluetoothDevice: element.device,
-                                          // flag: flag?.first ,
-                                          deviceName: element.device.name,
-                                          // isConnected:flag==true?true: false,
-                                          isConnected: false,
-                                          openOnTap: () {},
-                                          disconnectOnTap: () {},
-                                          connectOnTap: () async {
-                                            print('conect on tap check');
-                                            Future.delayed(const Duration(seconds: 3),
-                                                    () async {
-                                                  var pref = await SharedPreferences
-                                                      .getInstance();
-                                                  // var flag= pref.getStringList('${element.device.id}');
-                                                  var flag= pref.getInt('${element.device.id}');
-                                                  // var flag = pref.getBool(
-                                                  //     'flag');
-                                                  print('flaggss $flag');
-                                                  // if (flag!.first==null || flag.first == "false") {
-                                                  if (flag!=3) {
-                                                    setState(() {});
-                                                  }
-                                                });
+                                        // else {
 
-                                            await element.device.connect(
-                                              autoConnect: false,
-                                            );
-                                            var pref = await SharedPreferences
-                                                .getInstance();
+                                          validDevicesList.add(element.device);
+                                          deviceItemList.add(DeviceItem(
+                                            sharedPreferences: widget
+                                                .sharedPrefInstance,
+                                            update: () {
+                                              setState(() {});
+                                            },
+                                            bluetoothDevice: element.device,
+                                            // flag: flag?.first ,
+                                            deviceName: element.device.name,
+                                            // isConnected:flag==true?true: false,
+                                            isConnected: false,
+                                            openOnTap: () {},
+                                            disconnectOnTap: () {},
+                                            connectOnTap: () async {
+                                              print('conect on tap check');
+                                              Future.delayed(
+                                                  const Duration(seconds: 3),
+                                                      () async {
+                                                    var pref = await SharedPreferences
+                                                        .getInstance();
+                                                    // var flag= pref.getStringList('${element.device.id}');
+                                                    var flag = pref.getInt(
+                                                        '${element.device.id}');
+                                                    print('flaggss $flag');
+                                                    // if (flag!.first==null || flag.first == "false") {
+                                                    if (flag != 3) {
+                                                      setState(() {});
+                                                    }
+                                                  });
 
-                                            pref.setInt('${element.device.id}', 3);
-                                            pref.setString('lastDeviceId', '${element.device.id}');
-                                            // pref.setStringList('${element.device.id}', ['true']);
-                                            await Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    GasLevelPage(
-                                                      device: element.device,
-                                                    ),
-                                              ),
-                                            );
-                                            setState(() {});
-                                          },
-                                        ));
+                                              await element.device.connect(
+                                                autoConnect: true,);
+                                              var pref = await SharedPreferences
+                                                  .getInstance();
+                                              pref.setInt(
+                                                  '${element.device.id}', 3);
+                                              pref.setString('lastDeviceId',
+                                                  '${element.device.id}');
+                                              // pref.setStringList('${element.device.id}', ['true']);
+                                              await Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      GasLevelPage(
+                                                        device: element.device,
+                                                      ),
+                                                ),
+                                              );
+                                              setState(() {});
+                                            },
+                                          ));
+
+
+                                        // }
                                       }
                                     }
                                   }
@@ -438,8 +510,8 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                             child: CircularProgressIndicator(
                                               color: Color(0xFF0C9869),
                                             ));
-                                      } else  {
-                                        if (deviceItemList.length==0) {
+                                      } else  if(isScanning.data==false){
+                                        if (deviceItemList.isEmpty) {
                                           return SizedBox(
                                             height: (MediaQuery.of(context)
                                                 .size
@@ -469,17 +541,92 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                             ),
                                           );
                                         } else {
-                                          return GridView(
-                                            shrinkWrap: true,
-                                            physics:
-                                            const ClampingScrollPhysics(),
-                                            gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 1,
-                                              childAspectRatio: 3,
-                                            ),
-                                            children: deviceItemList,
-                                          );
+                                          List<BluetoothDevice> bleDevice=[];
+                                          bleDevice.clear();
+                                          validDevicesList.forEach((valid) {
+                                            if(lastDeviceId== '${valid.id}' && widget.sharedPrefInstance.getInt('${valid.id}')==2){
+                                              bleDevice.add(valid);
+                                            }
+                                          });
+                                          if(bleDevice.isNotEmpty) {
+                                            return FutureBuilder<void>(
+                                              future: bleDevice.first.connect(),
+                                              builder: (BuildContext context, AsyncSnapshot<void> handConnectSnap) {
+                                                if (handConnectSnap.connectionState == ConnectionState.done ) {
+                                                  widget.sharedPrefInstance.setInt('${bleDevice.first.id}', 3);
+                                                  widget.sharedPrefInstance.setString('lastDeviceId', '${bleDevice.first.id}');
+                                                 int index= validDevicesList.indexOf(bleDevice.first);
+                                                  validDevicesList.removeWhere((element) => element.id==bleDevice.first.id);
+                                                  print('fuuuuuckkkkkkk1 ${validDevicesList.length}');
+                                                  validDevicesList.add(bleDevice.first);
+                                                  deviceItemList.removeAt(index);
+                                                  deviceItemList.add(DeviceItem(
+                                                    sharedPreferences: widget
+                                                        .sharedPrefInstance,
+                                                    update: () {
+                                                      setState(() {});
+                                                    },
+                                                    bluetoothDevice: bleDevice.first,
+                                                    // flag: flag?.first ,
+                                                    deviceName: bleDevice.first.name,
+                                                    // isConnected:flag==true?true: false,
+                                                    isConnected: true,
+                                                    openOnTap: () async{
+                                                      await Navigator.of(context).push(
+                                                        MaterialPageRoute(
+                                                            builder: (context) => GasLevelPage(
+                                                                device: bleDevice.first)),
+                                                      );
+                                                    },
+                                                    disconnectOnTap: ()async {
+                                                      await bleDevice.first.disconnect();
+                                                      var pref =
+                                                          await SharedPreferences.getInstance();
+                                                      pref.setInt('${bleDevice.first.id}', 2);
+                                                      pref.setString('lastDeviceId','');
+                                                      // pref.setStringList('${validDevicesList[i].id}', ['false']);
+                                                      Future.delayed(Duration(seconds: 3),(){
+                                                        setState(() {});
+                                                      });
+                                                    },
+                                                    connectOnTap: () async {
+                                                    },
+                                                  ));
+                                                  print('fuuuuuckkkkkkk2 ${deviceItemList.length}');
+                                                  return GridView(
+                                                    shrinkWrap: true,
+                                                    physics:
+                                                    const ClampingScrollPhysics(),
+                                                    gridDelegate:
+                                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: 1,
+                                                      childAspectRatio: 3,
+                                                    ),
+                                                    children: deviceItemList,
+                                                  );
+                                                }
+                                                return Center(
+                                                    child: CircularProgressIndicator(
+                                                      color: Colors
+                                                          .yellowAccent,));
+                                              },
+
+                                            );
+                                          }
+                                          else{
+                                            return GridView(
+                                              shrinkWrap: true,
+                                              physics:
+                                              const ClampingScrollPhysics(),
+                                              gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 1,
+                                                childAspectRatio: 3,
+                                              ),
+                                              children: deviceItemList,
+                                            );
+                                          }
+
                                         }
                                       }
                                     }
