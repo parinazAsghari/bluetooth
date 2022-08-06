@@ -7,7 +7,10 @@ import 'package:gaslevel/main.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 
 class GasLevelPage extends StatefulWidget {
-  const GasLevelPage({Key? key, required this.device}) : super(key: key);
+  const GasLevelPage({
+    Key? key, required this.device,
+  }) : super(key: key);
+
   final BluetoothDevice device;
 
   @override
@@ -17,26 +20,17 @@ class GasLevelPage extends StatefulWidget {
 class _GasLevelPageState extends State<GasLevelPage> {
   @override
   void initState() {
-    widget.device.mtu.listen((event) {
-      print('stateeeeeeeeee ${event}');
-    });
-    // disconnect();
-    // bluetoothCharacteristic.setNotifyValue(false);
     super.initState();
   }
 
   @override
   void dispose() {
-    //Todo
     bluetoothCharacteristic.setNotifyValue(false);
-    // disconnect();
-    // Navigator.of(context).pop();
     super.dispose();
   }
 
   disconnect() async {
     await widget.device.disconnect();
-    // setState(() {});
   }
 
   late BluetoothCharacteristic bluetoothCharacteristic;
@@ -51,10 +45,9 @@ class _GasLevelPageState extends State<GasLevelPage> {
       //backgroundColor: Colors.white.withOpacity(0.93),
       appBar: AppBar(
         elevation: 20,
-        actions: [
-        ],
+        actions: [],
         centerTitle: true,
-        title:  Text(
+        title: Text(
           '${widget.device.name}',
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -62,10 +55,6 @@ class _GasLevelPageState extends State<GasLevelPage> {
             color: Colors.white,
           ),
         ),
-        // title: SizedBox(
-        //   width:120,
-        //   child: Center(child: Image.asset('assets/logo.png',)),
-        // ),
         backgroundColor: kPrimaryColor,
         iconTheme: const IconThemeData(
           color: Colors.white,
@@ -76,8 +65,7 @@ class _GasLevelPageState extends State<GasLevelPage> {
         builder: (BuildContext context,
             AsyncSnapshot<List<BluetoothService>> discoveredServiceSnapshot) {
           print('errrorrr ${discoveredServiceSnapshot.error}');
-          if (discoveredServiceSnapshot.hasData &&
-              discoveredServiceSnapshot.data!.isNotEmpty) {
+          if (discoveredServiceSnapshot.hasData && discoveredServiceSnapshot.data!=null) {
             return StreamBuilder<List<BluetoothService>>(
                 stream: widget.device.services,
                 builder: (BuildContext context,
@@ -107,7 +95,7 @@ class _GasLevelPageState extends State<GasLevelPage> {
                                 gasLevelColor = const Color(0xFF0C9869);
                                 value = 0.5;
                               }
-                              return Stack(children: [
+                              return Column(children: [
                                 Container(
                                   height: size.height * 0.2,
                                   child: Stack(
@@ -125,69 +113,72 @@ class _GasLevelPageState extends State<GasLevelPage> {
                                             decoration: BoxDecoration(
                                                 color: Colors.white,
                                                 borderRadius: BorderRadius.circular(20),
-                                                boxShadow:[
+                                                boxShadow: [
                                                   BoxShadow(
                                                     offset: Offset(0, 10),
                                                     blurRadius: 50,
                                                     color: kPrimaryColor.withOpacity(0.23),
                                                   )
-                                                ]
-                                            ),
+                                                ]),
                                             child: TextField(
                                               readOnly: true,
                                               decoration: InputDecoration(
                                                 hintText: "Battery",
-                                                hintStyle: TextStyle(color: kPrimaryColor.withOpacity(1)),
+                                                hintStyle:
+                                                TextStyle(color: kPrimaryColor.withOpacity(1)),
                                                 enabledBorder: InputBorder.none,
                                                 focusedBorder: InputBorder.none,
-
                                               ),
                                             ),
-
-                                          )
-                                      )
+                                          ))
                                     ],
                                   ),
                                 ),
-                                Align(
-                                  alignment: Alignment(0.0, 0.49),
-                                  child: Container(
-                                    // width: 190,
-                                    // width:(MediaQuery.of(context).size.width)-((MediaQuery.of(context).size.width-320)*2),
-                                    width: 220,
-                                    height:  MediaQuery.of(context).size.height*0.5,
-                                    // height: 410,
-                                    child: LiquidLinearProgressIndicator(
-                                      value: value,
-                                      // Defaults to 0.5.
-                                      valueColor:
-                                      AlwaysStoppedAnimation(gasLevelColor),
-                                      // Defaults to the current Theme's accentColor.
-                                      backgroundColor: Colors.transparent,
-                                      // Defaults to the current Theme's backgroundColor.
-                                      borderColor: Colors.transparent,
-                                      borderWidth: 0.0,
-                                      direction: Axis
-                                          .vertical, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.vertical.
-                                      // shapePath: null,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Container(
-                                    // color: Colors.yellowAccent,
-                                    width: 500,
-                                    // width:MediaQuery.of(context).size.width,
-                                    // height: 500,
-                                    height: MediaQuery.of(context).size.height*0.6,
-                                    child: Image.asset(
-                                      'assets/cylindr4.png',
-                                    ),
-                                  ),
+                                const Spacer(),
+                                Stack(
+                                    children:[
+                                      Positioned(
+                                        // width: 300,
+                                        height: MediaQuery.of(context).size.height * 0.55,
+                                        right: 30,
+                                        left:  30,
+                                        bottom: 20,
+                                        child: Container(
+                                          // width: 190,
+                                          // width:(MediaQuery.of(context).size.width)-((MediaQuery.of(context).size.width-320)*2),
+                                          // height: MediaQuery.of(context).size.height * 0.5,
+                                          // height: 410,
+                                          child: LiquidLinearProgressIndicator(
+                                            value: value,
+                                            // Defaults to 0.5.
+                                            valueColor: AlwaysStoppedAnimation(gasLevelColor),
+                                            // Defaults to the current Theme's accentColor.
+                                            backgroundColor: Colors.transparent,
+                                            // Defaults to the current Theme's backgroundColor.
+                                            borderColor: Colors.transparent,
+                                            borderWidth: 0.0,
+                                            direction: Axis
+                                                .vertical, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.vertical.
+                                            // shapePath: null,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        // color: Colors.yellowAccent,
+                                        // width:MediaQuery.of(context).size.width,
+                                        // height: 500,
+                                        height: MediaQuery.of(context).size.height * 0.6,
+                                        child: Image.asset(
+                                          'assets/cylindr4.png',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ]
+
                                 )
                               ]);
-                              // return Center(child: Text('${characteristicSnap.data!.first-48}'));
+
+                            // return Center(child: Text('${characteristicSnap.data!.first-48}'));
                             }
                             return const Center(
                               child: CircularProgressIndicator(
@@ -223,27 +214,25 @@ class HeaderWithBatteryBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(
           left: kDefaultPadding,
-        right: kDefaultPadding,
-        bottom: 10 + kDefaultPadding
-      ),
+          right: kDefaultPadding,
+          bottom: 10 + kDefaultPadding),
       height: size.height * 0.2 - 27,
       decoration: const BoxDecoration(
           color: kPrimaryColor,
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(36),
             bottomRight: Radius.circular(36),
-          )
-      ),
+          )),
       child: Row(
         children: [
           Expanded(
             flex: 8,
-            child: Text("Gasfüllstand & Battery Anzeige",
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: MediaQuery.of(context).size.width*0.04
-            ),
+            child: Text(
+              "Gasfüllstand & Battery Anzeige",
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: MediaQuery.of(context).size.width * 0.04),
             ),
           ),
           const Spacer(),
@@ -251,21 +240,28 @@ class HeaderWithBatteryBar extends StatelessWidget {
             flex: 1,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.gas_meter_outlined,
-                  color: Colors.white,
-                  size: 30.0,
+              children: const [
+                Expanded(
+                  child: Icon(
+                    Icons.gas_meter_outlined,
+                    color: Colors.white,
+                    size: 30.0,
+                  ),
                 ),
-                SizedBox(height: 2,),
-                Icon(Icons.battery_charging_full_sharp,
-                color: Colors.white,
-                  size: 30.0,
+
+                Expanded(
+                  child: Icon(
+                    Icons.battery_charging_full_sharp,
+                    color: Colors.white,
+                    size: 30.0,
+                  ),
                 )
               ],
             ),
           ),
-          const SizedBox(width: 5,)
+          const SizedBox(
+            width: 5,
+          )
         ],
       ),
     );

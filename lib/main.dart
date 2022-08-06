@@ -110,6 +110,19 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   void initState() {
     FlutterBluePlus.instance.stopScan().then((value) {setState(() {});});
     checkBluetoothPermission();
+
+    if(widget.sharedPrefInstance.getKeys().toList().isNotEmpty){
+      List<String?> keyList= widget.sharedPrefInstance.getKeys().toList();
+      if(keyList.isNotEmpty){
+        for (var element in keyList) {
+          if(widget.sharedPrefInstance.get(element!)==3){
+            widget.sharedPrefInstance.setInt(element, 2);
+          }
+        }
+      }
+
+    }
+
     // publicFlag = widget.sharedPrefInstance.getBool('flag');
     // lastDeviceId = widget.sharedPrefInstance.getString('lastDeviceId');
     image = Image.asset(
@@ -126,6 +139,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
     precacheImage(image.image, context);
     super.didChangeDependencies();
   }
+
 
   @override
   void dispose() {
@@ -212,7 +226,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                 FutureBuilder<List<BluetoothDevice>>(
                   initialData: [],
                   future: FlutterBluePlus.instance.connectedDevices,
-                  builder: (BuildContext context, AsyncSnapshot<List<BluetoothDevice>> connectedDevicesSnapshot) {
+                  builder: (context, AsyncSnapshot<List<BluetoothDevice>> connectedDevicesSnapshot) {
                     validDevicesList.clear();
                     deviceItemList.clear();
                     print('test1 ${connectedDevicesSnapshot.data}');
@@ -242,7 +256,8 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                             }
 
                           }
-                          if(lastDeviceId != connectedDevicesSnapshot.data![i].id.toString() && stateThreeExist==true ){
+                          if(lastDeviceId != connectedDevicesSnapshot.data![i].id.toString() && stateThreeExist==true || lastDeviceId=='' && stateThreeExist!=true
+                              || lastDeviceId!= connectedDevicesSnapshot.data![i].id.toString() && stateThreeExist!=true){
                             connectedDevicesSnapshot.data![i].disconnect();
                             validDevicesList.add(connectedDevicesSnapshot.data![i]);
                             deviceItemList.add(DeviceItem(
@@ -272,21 +287,25 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                     });
 
                                 await validDevicesList[i].connect(autoConnect: true,);
-                                var pref = await SharedPreferences.getInstance();
+                                // var pref = await SharedPreferences.getInstance();
                                 // pref.setStringList('${element.device.id}', ['true']);
-                                pref.setInt('${validDevicesList[i].id}', 3);
-                                pref.setString('lastDeviceId', '${validDevicesList[i].id}');
-                                await Navigator.of(context)
-                                    .push(MaterialPageRoute(
-                                  builder: (context) =>
-                                      GasLevelPage(
-                                        device: validDevicesList[i],
-                                      ),
-                                ),);
-                                setState(() {});
+                                widget.sharedPrefInstance.setInt('${validDevicesList[i].id}', 3);
+                                widget.sharedPrefInstance.setString('lastDeviceId', '${validDevicesList[i].id}');
+                                if(mounted){
+                                  await Navigator.of(context)
+                                      .push(MaterialPageRoute(
+                                    builder: (context) =>
+                                        GasLevelPage(
+                                          device: validDevicesList[i],
+                                        ),
+                                  ),);
+                                  setState(() {});
+                                }
+
                               },
                             ),);
                           }else {
+                            connectedDevicesSnapshot.data![i].connect();
                             widget.sharedPrefInstance.setInt('${connectedDevicesSnapshot.data![i].id}', 3);
                             widget.sharedPrefInstance.setString('lastDeviceId', '${connectedDevicesSnapshot.data![i].id}');
                             validDevicesList.add(connectedDevicesSnapshot.data![i]);
@@ -300,19 +319,21 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                               deviceName: validDevicesList[i].name,
                               isConnected: true,
                               openOnTap: () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          GasLevelPage(
-                                              device: validDevicesList[i])),
-                                );
+                                if(mounted) {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            GasLevelPage(
+                                                device: validDevicesList[i])),
+                                  );
+                                }
                               },
                               disconnectOnTap: () async {
                                 await validDevicesList[i].disconnect();
-                                var pref =
-                                await SharedPreferences.getInstance();
-                                pref.setInt('${validDevicesList[i].id}', 2);
-                                pref.setString('lastDeviceId', '');
+                                // var pref =
+                                // await SharedPreferences.getInstance();
+                                widget.sharedPrefInstance.setInt('${validDevicesList[i].id}', 2);
+                                widget.sharedPrefInstance.setString('lastDeviceId', '');
                                 // pref.setStringList('${validDevicesList[i].id}', ['false']);
 
                                 Future.delayed(Duration(seconds: 3), () {
@@ -322,6 +343,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                               },
                               connectOnTap: () {},
                             ),);
+
                           }
                         }
                       }
@@ -405,16 +427,17 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                     pref.setString(
                                                         'lastDeviceId',
                                                         '${element.device.id}');
-
-                                                    await Navigator.of(context)
-                                                        .push(MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          GasLevelPage(
-                                                            device: element
-                                                                .device,
-                                                          ),
-                                                    ),);
-                                                    setState(() {});
+                                                    if(mounted){
+                                                      await Navigator.of(context)
+                                                          .push(MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            GasLevelPage(
+                                                              device: element
+                                                                  .device,
+                                                            ),
+                                                      ),);
+                                                      setState(() {});
+                                                    }
                                                   },
                                                 ),
                                               );
@@ -455,13 +478,10 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                             connectOnTap: () async {
                                               print('conect on tap check');
                                               Future.delayed(
-                                                  const Duration(seconds: 3),
-                                                      () async {
-                                                    var pref = await SharedPreferences
-                                                        .getInstance();
+                                                  const Duration(seconds: 3), () async {
+                                                    // var pref = await SharedPreferences.getInstance();
                                                     // var flag= pref.getStringList('${element.device.id}');
-                                                    var flag = pref.getInt(
-                                                        '${element.device.id}');
+                                                    var flag = widget.sharedPrefInstance.getInt('${element.device.id}');
                                                     print('flaggss $flag');
                                                     // if (flag!.first==null || flag.first == "false") {
                                                     if (flag != 3) {
@@ -469,24 +489,23 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                     }
                                                   });
 
-                                              await element.device.connect(
-                                                autoConnect: true,);
-                                              var pref = await SharedPreferences
-                                                  .getInstance();
-                                              pref.setInt(
-                                                  '${element.device.id}', 3);
-                                              pref.setString('lastDeviceId',
-                                                  '${element.device.id}');
+                                              await element.device.connect(autoConnect: true,);
+                                              // var pref = await SharedPreferences.getInstance();
+                                              widget.sharedPrefInstance.setInt('${element.device.id}', 3);
+                                              widget.sharedPrefInstance.setString('lastDeviceId', '${element.device.id}');
                                               // pref.setStringList('${element.device.id}', ['true']);
-                                              await Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      GasLevelPage(
-                                                        device: element.device,
-                                                      ),
-                                                ),
-                                              );
-                                              setState(() {});
+                                              if(mounted){
+                                                await Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        GasLevelPage(
+                                                          device: element.device,
+                                                        ),
+                                                  ),
+                                                );
+                                                setState(() {});
+                                              }
+
                                             },
                                           ));
 
@@ -572,18 +591,20 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                                     // isConnected:flag==true?true: false,
                                                     isConnected: true,
                                                     openOnTap: () async{
-                                                      await Navigator.of(context).push(
-                                                        MaterialPageRoute(
-                                                            builder: (context) => GasLevelPage(
-                                                                device: bleDevice.first)),
-                                                      );
+                                                      if(mounted){
+                                                        await Navigator.of(context).push(
+                                                          MaterialPageRoute(
+                                                              builder: (context) => GasLevelPage(
+                                                                  device: bleDevice.first)),
+                                                        );
+                                                      }
                                                     },
                                                     disconnectOnTap: ()async {
                                                       await bleDevice.first.disconnect();
-                                                      var pref =
-                                                          await SharedPreferences.getInstance();
-                                                      pref.setInt('${bleDevice.first.id}', 2);
-                                                      pref.setString('lastDeviceId','');
+                                                      // var pref =
+                                                      //     await SharedPreferences.getInstance();
+                                                      widget.sharedPrefInstance.setInt('${bleDevice.first.id}', 2);
+                                                      widget.sharedPrefInstance.setString('lastDeviceId','');
                                                       // pref.setStringList('${validDevicesList[i].id}', ['false']);
                                                       Future.delayed(Duration(seconds: 3),(){
                                                         setState(() {});

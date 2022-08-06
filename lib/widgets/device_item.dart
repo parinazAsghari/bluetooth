@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
@@ -111,7 +110,7 @@ class _DeviceItemState extends State<DeviceItem> {
                       timer!.cancel();
                     }
                     widget.sharedPreferences.setInt('${widget.bluetoothDevice.id}',3);
-                    widget.sharedPreferences.setString('lastDeviceId', '${widget.bluetoothDevice.id}');
+                    // widget.sharedPreferences.setString('lastDeviceId', '${widget.bluetoothDevice.id}');
 
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -137,7 +136,7 @@ class _DeviceItemState extends State<DeviceItem> {
                     );
                   }
                   else if(deviceState.connectionState ==ConnectionState.active && deviceState.data == BluetoothDeviceState.disconnected){
-                    if(Platform.isIOS) {
+                    if(Platform.isAndroid) {
                       timer = Timer.periodic(
                           const Duration(seconds: 8), (Timer t) async {
                             // widget.update();
@@ -145,11 +144,8 @@ class _DeviceItemState extends State<DeviceItem> {
                         // setState(() {});
                       });
                     }
-
-                    // widget.sharedPreferences.clear();
-                    // widget.sharedPreferences.setStringList('${widget.bluetoothDevice.id}', ["false"]);
                     widget.sharedPreferences.setInt('${widget.bluetoothDevice.id}',2);
-                    widget.sharedPreferences.setString('lastDeviceId', '');
+                    // widget.sharedPreferences.setString('lastDeviceId', '');
                     return const Padding(
                       padding: EdgeInsets.only(right: 2.0),
                       child: Text('device disconnected,wait...',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 10),),
