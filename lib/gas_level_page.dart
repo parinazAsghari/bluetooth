@@ -140,8 +140,8 @@ class _GasLevelPageState extends State<GasLevelPage> {
                                       Positioned(
                                         // width: 300,
                                         height: MediaQuery.of(context).size.height * 0.55,
-                                        right: 30,
-                                        left:  30,
+                                        right: 25,
+                                        left:  25,
                                         bottom: 20,
                                         child: Container(
                                           // width: 190,
@@ -165,7 +165,8 @@ class _GasLevelPageState extends State<GasLevelPage> {
                                       ),
                                       Container(
                                         // color: Colors.yellowAccent,
-                                        // width:MediaQuery.of(context).size.width,
+                                        // width: 245,
+                                        // width:MediaQuery.of(context).size.height*0.5,
                                         // height: 500,
                                         height: MediaQuery.of(context).size.height * 0.6,
                                         child: Image.asset(

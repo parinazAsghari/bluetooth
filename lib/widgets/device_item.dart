@@ -136,7 +136,7 @@ class _DeviceItemState extends State<DeviceItem> {
                     );
                   }
                   else if(deviceState.connectionState ==ConnectionState.active && deviceState.data == BluetoothDeviceState.disconnected){
-                    if(Platform.isAndroid) {
+                    if(Platform.isIOS) {
                       timer = Timer.periodic(
                           const Duration(seconds: 8), (Timer t) async {
                             // widget.update();

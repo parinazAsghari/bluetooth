@@ -336,7 +336,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                                 widget.sharedPrefInstance.setString('lastDeviceId', '');
                                 // pref.setStringList('${validDevicesList[i].id}', ['false']);
 
-                                Future.delayed(Duration(seconds: 3), () {
+                                Future.delayed(const Duration(seconds: 3), () {
                                   setState(() {});
                                 });
                                 // });
